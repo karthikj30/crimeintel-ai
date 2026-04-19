@@ -1,0 +1,26 @@
+{
+  "name": "crimescope-ai",
+  "version": "1.0.0",
+  "description": "Real-Time Crime Intelligence Platform",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "next dev --port 3001"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.1.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
+    "lucide-react": "^0.364.0",
+    "next": "^16.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "uuid": "^10.0.0",
+    "zustand": "^4.4.7"
+  }
+}
