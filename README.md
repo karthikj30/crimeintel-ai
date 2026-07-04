@@ -1,4 +1,4 @@
-# 🛡️ CrimeScope AI
+# 🛡️ CrimeIntel AI
 
 [![Build Status](https://img.shields.io/badge/Build-Passing-success?style=flat-square)](https://github.com/your-username/crimescope-ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
