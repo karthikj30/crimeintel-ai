@@ -11,7 +11,7 @@ const nextConfig = {
     };
   },
   turbopack: {
-    root: 'C:\\Users\\hp\\OneDrive\\Desktop\\buildwithai\\app_build',
+    root: __dirname,
   },
 };
 

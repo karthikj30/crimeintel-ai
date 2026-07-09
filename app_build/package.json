@@ -1,11 +1,15 @@
 {
-  "name": "crimescope-ai",
+  "name": "ksp-crime-intelligence",
   "version": "1.0.0",
-  "description": "Real-Time Crime Intelligence Platform",
+  "description": "KSP Conversational Crime Intelligence Platform",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "next dev --port 3001"
+    "backend": "node server/index.js",
+    "seed": "node server/fir/seed.js --force",
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "serve": "next start --port 3001"
   },
   "dependencies": {
     "better-sqlite3": "^11.1.2",

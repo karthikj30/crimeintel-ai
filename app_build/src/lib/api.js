@@ -64,3 +64,41 @@ export async function acknowledgeAlert(id) {
 export async function searchIncidents(q) {
   return fetchJSON(`/api/search?q=${encodeURIComponent(q)}`);
 }
+
+// --- Conversational Assistant (no client timeout; the LLM can take a few seconds) ---
+export async function getChatStatus() {
+  return fetchJSON('/api/chat/status');
+}
+
+export async function postChat(message, sessionId) {
+  const res = await fetch(`${BASE}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, sessionId }),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+// --- Criminal Network ---
+export async function getNetworkGraph(max = 110) {
+  return fetchJSON(`/api/network/graph?max=${max}`);
+}
+export async function getNetworkGangs() {
+  return fetchJSON('/api/network/gangs');
+}
+export async function getPerson(id) {
+  return fetchJSON(`/api/network/person/${id}`);
+}
+
+// --- Karnataka geo + analytics (FIR) ---
+export async function getFirStations() { return fetchJSON('/api/fir/stations'); }
+export async function getFirHeatmap() { return fetchJSON('/api/fir/heatmap'); }
+export async function getFirDistricts() { return fetchJSON('/api/fir/districts'); }
+export async function getFirOverview() { return fetchJSON('/api/fir/overview'); }
+export async function getFirTemporal() { return fetchJSON('/api/fir/temporal'); }
+export async function getFirCategories() { return fetchJSON('/api/fir/categories'); }
+export async function getFirDemographics() { return fetchJSON('/api/fir/demographics'); }
+export async function getFirHourly() { return fetchJSON('/api/fir/hourly'); }
+export async function getFirForecast() { return fetchJSON('/api/fir/forecast'); }
+export async function getFirOffenders() { return fetchJSON('/api/fir/offenders'); }

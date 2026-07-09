@@ -4,7 +4,7 @@
 // ============================================================
 
 import { useState, useEffect } from 'react';
-import { Search, Bell, BellRing, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Search, Bell, BellRing, PanelRightOpen, PanelRightClose, ShieldCheck } from 'lucide-react';
 import useUIStore from '@/stores/uiStore';
 import useAlertStore from '@/stores/alertStore';
 import useRealtimeStore from '@/stores/realtimeStore';
@@ -15,6 +15,8 @@ export default function Header() {
   const alertPanelOpen = useUIStore(s => s.alertPanelOpen);
   const toggleAlertPanel = useUIStore(s => s.toggleAlertPanel);
   const setView = useUIStore(s => s.setView);
+  const role = useUIStore(s => s.role);
+  const setRole = useUIStore(s => s.setRole);
   const unreadCount = useAlertStore(s => s.unreadCount);
   const connected = useRealtimeStore(s => s.connected);
   const eventCount = useRealtimeStore(s => s.eventCount);
@@ -39,8 +41,8 @@ export default function Header() {
   return (
     <header className="header">
       <div>
-        <div className="header-title">CrimeScope AI</div>
-        <div className="header-subtitle">Real-Time Intelligence Platform</div>
+        <div className="header-title">KSP Crime Intelligence</div>
+        <div className="header-subtitle">Karnataka State Police · SCRB</div>
       </div>
 
       <div className="header-search">
@@ -71,6 +73,20 @@ export default function Header() {
         </div>
 
         <span className="header-time text-mono">{time}</span>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 4 }} title="Role-based access & audit (governance)">
+          <ShieldCheck size={14} style={{ color: '#22c55e' }} />
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: 'var(--glass-border)', borderRadius: 'var(--radius-sm)', fontSize: 11, fontWeight: 600, padding: '4px 8px', cursor: 'pointer', outline: 'none' }}
+          >
+            <option>Investigator</option>
+            <option>Analyst</option>
+            <option>Supervisor</option>
+            <option>Policymaker</option>
+          </select>
+        </div>
 
         <button className="header-btn" onClick={() => setView('alerts')} id="header-alerts-btn">
           {unreadCount > 0 ? <BellRing size={18} /> : <Bell size={18} />}

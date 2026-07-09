@@ -13,10 +13,12 @@ import useUIStore from '@/stores/uiStore';
 import useSocket from '@/hooks/useSocket';
 
 // Dynamic imports to avoid SSR issues with Leaflet
-const HeatMap = dynamic(() => import('@/components/map/HeatMap'), { ssr: false, loading: () => <LoadingPlaceholder /> });
+const KarnatakaMap = dynamic(() => import('@/components/map/KarnatakaMap'), { ssr: false, loading: () => <LoadingPlaceholder /> });
 const AnalyticsView = dynamic(() => import('@/components/analytics/AnalyticsView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
 const AlertsView = dynamic(() => import('@/components/alerts/AlertsView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
 const InvestigateView = dynamic(() => import('@/components/investigation/InvestigateView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
+const AssistantView = dynamic(() => import('@/components/assistant/AssistantView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
+const NetworkView = dynamic(() => import('@/components/network/NetworkView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
 
 function LoadingPlaceholder() {
   return (
@@ -40,8 +42,12 @@ export default function Dashboard() {
 
   const renderView = () => {
     switch (activeView) {
+      case 'assistant':
+        return <AssistantView />;
+      case 'network':
+        return <NetworkView />;
       case 'map':
-        return <HeatMap />;
+        return <KarnatakaMap />;
       case 'analytics':
         return <AnalyticsView />;
       case 'alerts':
@@ -49,7 +55,7 @@ export default function Dashboard() {
       case 'investigate':
         return <InvestigateView />;
       default:
-        return <HeatMap />;
+        return <KarnatakaMap />;
     }
   };
 
@@ -57,15 +63,17 @@ export default function Dashboard() {
     return <LoadingPlaceholder />;
   }
 
+  const isAssistant = ['assistant', 'network', 'map', 'analytics'].includes(activeView);
+
   return (
-    <div className={`app-layout ${!alertPanelOpen ? 'alert-collapsed' : ''}`}>
+    <div className={`app-layout ${(!alertPanelOpen || isAssistant) ? 'alert-collapsed' : ''} ${isAssistant ? 'no-bottombar' : ''}`}>
       <Sidebar />
       <Header />
       <main className="main-content">
         {renderView()}
       </main>
-      <AlertPanel />
-      <BottomBar />
+      {!isAssistant && <AlertPanel />}
+      {!isAssistant && <BottomBar />}
     </div>
   );
 }

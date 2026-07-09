@@ -1,0 +1,79 @@
+/* ============================================================
+   KSP CRIME INTELLIGENCE — Network View Styles
+   ============================================================ */
+
+.net-view { height: 100%; min-height: 0; display: flex; flex-direction: column; position: relative; background: var(--bg-primary); }
+
+.net-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 14px 22px; border-bottom: var(--glass-border); background: var(--bg-glass); backdrop-filter: blur(var(--glass-blur));
+}
+.net-header-title { display: flex; align-items: center; gap: 12px; }
+.net-header-icon { width: 38px; height: 38px; border-radius: var(--radius-md); display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); box-shadow: var(--shadow-glow); }
+.net-header-title h2 { font-size: 15px; font-weight: 700; }
+.net-header-title p { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; }
+.net-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--text-secondary); }
+.net-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.net-legend i { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+.net-legend i.ring { width: 11px; height: 11px; border-radius: 50%; background: transparent; border: 2px solid #fff; }
+
+.net-body { flex: 1; min-height: 0; display: flex; }
+.net-canvas { flex: 1; min-width: 0; position: relative; display: grid; place-items: center; overflow: hidden; background: radial-gradient(700px 500px at 50% 40%, rgba(var(--accent-primary-rgb), 0.06), transparent 70%); }
+.net-svg { width: 100%; height: 100%; }
+.net-node-sel { filter: drop-shadow(0 0 8px #fff); }
+.net-node-label { fill: var(--text-primary); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: #060a14; stroke-width: 3px; }
+.net-status { color: var(--text-secondary); font-size: 13px; padding: 20px; }
+.net-status.err { color: var(--severity-high); }
+
+.net-side { width: 260px; flex-shrink: 0; border-left: var(--glass-border); background: var(--bg-secondary); display: flex; flex-direction: column; min-height: 0; }
+.net-side-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); border-bottom: var(--glass-border); }
+.net-gangs { overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.net-gang { text-align: left; background: var(--bg-glass); border: var(--glass-border); border-radius: var(--radius-md); padding: 10px 12px; cursor: pointer; transition: var(--transition-fast); }
+.net-gang:hover { border-color: var(--border-accent); background: var(--bg-glass-hover); transform: translateX(-2px); }
+.net-gang-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.net-gang-name { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.net-gang-name svg { color: var(--severity-critical); }
+.net-gang-size { font-size: 11px; font-weight: 700; color: #fff; background: var(--accent-primary); border-radius: var(--radius-full); padding: 1px 8px; }
+.net-gang-meta { display: flex; gap: 10px; margin-top: 5px; font-size: 11px; color: var(--text-muted); }
+.net-gang-heinous { color: var(--severity-critical); }
+
+/* Drawer */
+.net-drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 340px; z-index: 20;
+  background: var(--bg-elevated); border-left: var(--border-accent); box-shadow: var(--shadow-lg);
+  padding: 18px; overflow-y: auto; animation: netSlide var(--transition-base);
+}
+@keyframes netSlide { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.net-drawer-close { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-sm); border: var(--glass-border); background: var(--bg-glass); color: var(--text-secondary); cursor: pointer; }
+.net-drawer-close:hover { color: var(--text-primary); }
+.net-profile-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-right: 30px; }
+.net-avatar { width: 46px; height: 46px; border-radius: var(--radius-md); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; flex-shrink: 0; }
+.net-profile-head h3 { font-size: 15px; font-weight: 700; }
+.net-profile-head p { font-size: 11.5px; color: var(--text-secondary); }
+.net-risk { margin-left: auto; text-align: center; display: flex; flex-direction: column; font-size: 9px; text-transform: uppercase; color: var(--text-muted); }
+.net-risk span { font-size: 20px; font-weight: 800; line-height: 1; }
+.net-risk.high span { color: var(--severity-critical); }
+.net-risk.med span { color: var(--severity-medium); }
+.net-risk.low span { color: var(--severity-low); }
+.net-flag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--severity-critical); background: rgba(var(--severity-critical-rgb), 0.12); padding: 5px 10px; border-radius: var(--radius-full); margin-bottom: 10px; }
+.net-profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.net-profile-tags span { font-size: 10.5px; color: var(--text-secondary); background: var(--bg-glass); border: var(--glass-border); border-radius: var(--radius-full); padding: 3px 9px; }
+.net-sec-title { display: flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 14px 0 8px; }
+.net-cases { display: flex; flex-direction: column; gap: 5px; }
+.net-case { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 11px; padding: 7px 9px; background: var(--bg-glass); border-radius: var(--radius-sm); border: var(--glass-border); }
+.net-case-no { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-secondary); grid-column: 1 / -1; }
+.net-case-crime { color: var(--text-primary); font-weight: 500; }
+.net-case-grav { font-size: 10px; color: var(--text-muted); }
+.net-case-grav.heinous { color: var(--severity-critical); }
+.net-case-status { grid-column: 1 / -1; font-size: 10px; color: var(--text-secondary); }
+.net-assoc { display: flex; flex-wrap: wrap; gap: 6px; }
+.net-assoc-chip { font-size: 11px; padding: 5px 9px; border-radius: var(--radius-full); border: var(--glass-border); background: var(--bg-glass); color: var(--text-secondary); cursor: pointer; transition: var(--transition-fast); }
+.net-assoc-chip:hover { color: var(--text-primary); border-color: var(--border-accent); }
+.net-assoc-chip b { color: var(--accent-secondary); }
+.net-links { display: flex; gap: 16px; margin-top: 14px; padding-top: 12px; border-top: var(--glass-border); font-size: 11.5px; color: var(--text-secondary); }
+.net-links div { display: inline-flex; align-items: center; gap: 6px; }
+
+@media (max-width: 820px) {
+  .net-side { display: none; }
+  .net-drawer { width: 100%; }
+}

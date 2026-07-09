@@ -1,6 +1,16 @@
 // ============================================================
-// CRIMESCOPE AI — Express + Socket.io Server Entry Point
+// KSP CRIME INTELLIGENCE — Express + Socket.io Server Entry Point
 // ============================================================
+
+// Lightweight .env loader (no dependency) so ANTHROPIC_API_KEY /
+// KSP_LLM_MODEL can be set in app_build/.env to enable the Claude brain.
+try {
+  require('fs').readFileSync(require('path').join(__dirname, '..', '.env'), 'utf8')
+    .split(/\r?\n/).forEach((line) => {
+      const m = line.match(/^\s*([\w.]+)\s*=\s*(.*)\s*$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    });
+} catch { /* no .env present — offline engine will be used */ }
 
 const express = require('express');
 const http = require('http');
@@ -16,6 +26,10 @@ const incidentRoutes = require('./routes/incidents');
 const analyticsRoutes = require('./routes/analytics');
 const alertRoutes = require('./routes/alerts');
 const searchRoutes = require('./routes/search');
+const chatRoutes = require('./routes/chat');
+const networkRoutes = require('./routes/network');
+const firRoutes = require('./routes/fir');
+const { seedFir } = require('./fir/seed');
 
 const PORT = process.env.PORT || 3000;
 
@@ -41,6 +55,9 @@ app.use('/api/incidents', incidentRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/network', networkRoutes);
+app.use('/api/fir', firRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -59,6 +76,7 @@ console.log('  ⏳ Initializing database...');
 // Initialize database
 const db = getDb();
 seedDatabase();
+seedFir(); // KSP FIR database (Karnataka crime records) for the conversational AI
 
 console.log('  ✓ Database ready');
 console.log('');
