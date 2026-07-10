@@ -1,7 +1,9 @@
 // ============================================================
-// KSP CRIME INTELLIGENCE — FIR Database Bootstrap
+// KSP CRIME INTELLIGENCE — FIR Database Bootstrap (local native SQLite)
+// ------------------------------------------------------------
+// Local dev / npm run serve: better-sqlite3 (native, fast).
+// Vercel / Catalyst: use getDb() from getDb.js → sql.js WASM path.
 // ============================================================
-const Database = require('better-sqlite3');
 const path = require('path');
 const { initFirSchema } = require('./schema');
 
@@ -11,6 +13,7 @@ let db;
 
 function getFirDb() {
   if (!db) {
+    const Database = require('better-sqlite3');
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');

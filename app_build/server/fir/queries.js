@@ -4,8 +4,8 @@
 // ============================================================
 const { getFirDb } = require('./db');
 
-function overviewStats() {
-  const db = getFirDb();
+function overviewStats(dbIn) {
+  const db = dbIn || getFirDb();
   const one = (sql) => db.prepare(sql).get();
   const all = (sql) => db.prepare(sql).all();
   return {
@@ -35,8 +35,8 @@ function overviewStats() {
 }
 
 // Full FIR detail by CrimeNo (string) or CaseMasterID (number).
-function getCaseFull(idOrCrimeNo) {
-  const db = getFirDb();
+function getCaseFull(idOrCrimeNo, dbIn) {
+  const db = dbIn || getFirDb();
   const byNumber = /^\d+$/.test(String(idOrCrimeNo)) && String(idOrCrimeNo).length <= 8;
   const where = byNumber ? 'c.CaseMasterID = ?' : 'c.CrimeNo = ?';
 

@@ -42,6 +42,10 @@ npm run serve
 ```
 Open **http://localhost:3001**.
 
+> **Important:** Keep `npm run backend` running in the other terminal. The production
+> frontend (`npm run serve`) proxies `/api/*` requests to Express on `:3000`.
+> Without the backend, chat, map, network and analytics will return 500/503 errors.
+
 > **Hot-reload alternative:** `npm run dev` (port 3001). On some Windows setups the
 > Turbopack dev server can crash on a slow filesystem — if that happens, use
 > `npm run build && npm run serve` (stable production server).

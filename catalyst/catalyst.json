@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "name": "ksp-crime-intelligence",
+  "description": "KSP Conversational Crime Intelligence — Zoho Catalyst deployment",
+  "homepage": "https://catalyst.zoho.com",
+  "functions": {
+    "api": {
+      "type": "basicio",
+      "runtime": "nodejs20",
+      "entry": "functions/api/index.js",
+      "memory": 512,
+      "timeout": 60
+    }
+  },
+  "appsail": [
+    {
+      "name": "ksp-frontend",
+      "platform": "node20",
+      "build_path": "../app_build",
+      "start_command": "npm run serve",
+      "port": 3001
+    }
+  ],
+  "datastore": {
+    "tables": "See server/fir/schema.js — ports to Catalyst Data Store"
+  },
+  "notes": {
+    "quickml": "Point LLM_BASE_URL at Catalyst QuickML LLM Serving endpoint in provider.js",
+    "zia": "Kannada STT/TTS via Catalyst Zia Services — replaces Web Speech API in production",
+    "smartbrowz": "Server-side PDF conversation export",
+    "authentication": "RBAC roles: Investigator, Analyst, Supervisor, Policymaker",
+    "cron": "Scheduled hotspot early-warning jobs via Catalyst Cron"
+  }
+}

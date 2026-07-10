@@ -64,8 +64,8 @@ function personMeta(db, ids) {
 }
 
 // Build a visualization-ready graph, capped to the most-connected nodes.
-function buildGraph({ maxNodes = 110 } = {}) {
-  const db = getFirDb();
+function buildGraph({ maxNodes = 110, db: dbIn } = {}) {
+  const db = dbIn || getFirDb();
   const edges = rawEdges(db);
 
   // degree across all edge types
@@ -114,8 +114,8 @@ function buildGraph({ maxNodes = 110 } = {}) {
 }
 
 // Detected gangs = connected components of the CO_ACCUSED graph (size >= 3).
-function listGangs({ minSize = 3, limit = 12 } = {}) {
-  const db = getFirDb();
+function listGangs({ minSize = 3, limit = 12, db: dbIn } = {}) {
+  const db = dbIn || getFirDb();
   const co = db.prepare(`
     SELECT a1.PersonMasterID p1, a2.PersonMasterID p2
     FROM Accused a1 JOIN Accused a2
@@ -158,8 +158,8 @@ function listGangs({ minSize = 3, limit = 12 } = {}) {
 }
 
 // Ego network + full profile for one person (investigator drill-down).
-function personEgo(personId) {
-  const db = getFirDb();
+function personEgo(personId, dbIn) {
+  const db = dbIn || getFirDb();
   const person = db.prepare(`
     SELECT p.*, d.DistrictName district, ca.caste_master_name caste, rl.ReligionName religion, o.OccupationName occupation
     FROM PersonMaster p

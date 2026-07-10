@@ -7,6 +7,8 @@
     "start": "node server/index.js",
     "backend": "node server/index.js",
     "seed": "node server/fir/seed.js --force",
+    "fetch:police": "node server/scripts/fetchOverpassPolice.js",
+    "prepare:hf": "node server/scripts/prepareHfDataset.js",
     "dev": "next dev --port 3001",
     "build": "next build",
     "serve": "next start --port 3001"
@@ -24,6 +26,7 @@
     "recharts": "^2.12.7",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
+    "sql.js": "^1.12.0",
     "uuid": "^10.0.0",
     "zustand": "^4.4.7"
   }

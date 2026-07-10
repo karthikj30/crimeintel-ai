@@ -1,58 +1,73 @@
 # Deployment Guide — KSP Crime Intelligence
 
-The app currently runs as **two processes**: a Next.js 16 frontend (`:3001`) and an Express +
-SQLite backend (`:3000`), with the frontend proxying `/api/*` to the backend
-(`next.config.js` → `rewrites`). Below are the paths to production.
+The app runs as **Next.js 16** with integrated API routes for Vercel, plus an optional
+**Express + Socket.io** backend for local development with hot WebSocket features.
 
 ---
 
-## Option A — Hugging Face (data) + Vercel (demo)   ← your plan
+## Option A — Hugging Face (data) + Vercel (demo)   ← implemented
 
-Vercel is serverless, so the standalone Express server and the native `better-sqlite3` module
-won't run there as-is. Two changes make it Vercel-native:
+### Architecture
+- **Frontend + API:** Next.js `src/app/api/**` route handlers (no separate Express on Vercel)
+- **Database:** `sql.js` (WASM SQLite) loads `ksp_crime.db` from HuggingFace at cold start
+- **Data repo:** [sleepingbeauty11/Datathon_CodeWars](https://huggingface.co/datasets/sleepingbeauty11/Datathon_CodeWars)
 
-1. **Port the API to Next.js Route Handlers.** Move each Express route to
-   `src/app/api/**/route.js` (e.g. `src/app/api/chat/route.js`). The query/AI logic in
-   `server/fir/*` and `server/ai/*` is plain Node and can be imported directly — only the
-   Express `router` wrappers get replaced. Then `next.config.js` needs **no** proxy rewrite.
-2. **Serverless-friendly data access.** `better-sqlite3` is a native addon; on Vercel use one of:
-   - **`sql.js` (SQLite compiled to WASM)** — bundle `ksp_crime.db` (or load it from a Hugging
-     Face dataset URL at cold start) and query it in-memory. Best fit for the NL→SQL engine.
-   - Precomputed **static JSON** for the analytics/graph endpoints (they're read-only aggregates).
+### Deploy to Vercel
+```bash
+# From repo root (vercel.json points rootDirectory to app_build)
+vercel --prod
+```
 
-**Hugging Face as the data store.** Host the seed database / derived JSON as a HF **dataset**
-(e.g. `sleepingbeauty11/Datathon_CodeWars`). At cold start, fetch the file from
-`https://huggingface.co/datasets/<user>/<repo>/resolve/main/<file>` into memory. Regenerate the
-dataset any time with `npm run seed` and push it to the HF repo.
+### Environment variables (Vercel dashboard)
+| Var | Value |
+|-----|-------|
+| `HF_DATASET_REPO` | `sleepingbeauty11/Datathon_CodeWars` |
+| `HF_DATASET_FILE` | `ksp_crime.db` |
+| `LLM_BASE_URL` | (optional) Groq / HF router for open-ended AI |
+| `LLM_API_KEY` | (optional) |
+| `LLM_MODEL` | (optional) e.g. `llama-3.3-70b-versatile` |
 
-**Vercel env vars (all optional):** `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`, `HF_DATASET_URL` (if loading data from HF). No Anthropic key needed.
+### Upload / refresh the HuggingFace dataset
+```bash
+cd app_build
+npm run seed
+npm run fetch:police      # refresh OSM police stations (Overpass)
+npm run prepare:hf        # creates hf_upload/ bundle
+# Upload hf_upload/* to your HF dataset repo
+```
 
-> This port is the main remaining deployment task — the query/AI/graph/analytics logic is already
-> framework-agnostic, so it's a mechanical move of ~6 route files into `app/api/`.
+### Local dev (two-process mode with WebSocket)
+```bash
+npm run backend           # Express :3000 (proxied in dev)
+npm run dev               # Next.js :3001
+```
+On Vercel, `next.config.js` skips the proxy — API routes run in-process.
 
 ---
 
 ## Option B — Zoho Catalyst   (mandatory per the challenge)
 
-The challenge mandates Catalyst deployment. The architecture maps cleanly:
+Deployment config lives in `catalyst/` at the repo root.
 
-| App component | Catalyst service |
-|---|---|
-| Express API routes (`/api/chat`, `/api/network`, `/api/fir`) | **Catalyst Serverless (Functions)** or **AppSail** (managed Node runtime) |
-| Next.js frontend | **Catalyst Web Client Hosting** / **Slate** |
-| FIR relational database (SQLite) | **Catalyst Data Store** (relational; the schema ports directly) |
-| Conversational NL→SQL / RAG brain | **Catalyst QuickML** (LLM Serving / RAG) — swap in via `server/ai/provider.js` |
-| Kannada speech (STT/TTS) + translation | **Catalyst Zia Services** (speech, translation) |
-| PDF conversation export | **Catalyst SmartBrowz** (server-side) or the current client-side export |
-| Auth / RBAC | **Catalyst Authentication** + **API Gateway** |
-| Object storage (datasets, exports) | **Catalyst Stratus** |
-| Scheduled hotspot/early-warning jobs | **Catalyst Cron** |
+| App component | Catalyst service | File |
+|---|---|---|
+| API (`/api/chat`, `/api/network`, `/api/fir`) | **Serverless Functions** | `catalyst/functions/api/index.js` |
+| Next.js frontend | **AppSail** (managed Node) | `catalyst/catalyst.json` |
+| FIR database | **Data Store** (or HF dataset via `hfData.js`) | `server/fir/schema.js` |
+| NL→SQL / RAG | **QuickML** LLM Serving | `server/ai/provider.js` |
+| Kannada STT/TTS | **Zia Services** | See Kannada section below |
+| PDF export | **SmartBrowz** | client-side fallback in Assistant |
+| Auth / RBAC | **Authentication** + **API Gateway** | planned |
+| Scheduled jobs | **Cron** | hotspot early-warning |
 
-`provider.js` already isolates the LLM call, so pointing the brain at QuickML is a config change.
+```bash
+# Install Catalyst CLI, then from catalyst/ directory:
+catalyst deploy
+```
 
-> **Note on the conflict:** the datathon lists Catalyst as *mandatory*. Hugging Face + Vercel is
-> great for a fast public demo mirror, but confirm whether the official submission must run on
-> Catalyst — if so, use HF only for dataset storage and deploy compute on Catalyst.
+Set `CATALYST_ENV=1` and `HF_DATASET_REPO` so functions load data from HuggingFace.
+
+> Use HF for dataset storage; deploy compute on Catalyst for the official submission.
 
 ---
 

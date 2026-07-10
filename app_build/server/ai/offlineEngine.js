@@ -17,15 +17,104 @@ const fmt = (rows, sql, answer, followups, extra = {}) => ({
   evidence: crimeNos(rows).map((c) => `FIR ${c}`), followups, ...extra,
 });
 
-function handle(question) {
-  const db = getFirDb();
-  const q = (question || '').toLowerCase();
+// Kannada → English tokens for offline intent matching (OpenSLR / in-app kn-IN speech).
+const KN_DISTRICTS = [
+  [/ಬೆಂಗಳೂರು\s*ನಗರ|ಬೆಂಗಳೂರು\s*ಸಿಟಿ/i, 'Bengaluru City'],
+  [/ಬೆಂಗಳೂರು\s*ಗ್ರಾಮೀಣ|ಬೆಂಗಳೂರು\s*ರೂರಲ್/i, 'Bengaluru Rural'],
+  [/ಬೆಂಗಳೂರಿನಲ್ಲಿ|ಬೆಂಗಳೂರ್/i, 'Bengaluru City'],
+  [/ಮೈಸೂರು|ಮೈಸೂರ್|ಮೈಸೂರಿನಲ್ಲಿ/i, 'Mysuru'],
+  [/ಮಂಗಳೂರು|ದಕ್ಷಿಣ\s*ಕನ್ನಡ/i, 'Dakshina Kannada'],
+  [/ಬೆಳಗಾವಿ|ಬೆಲಗಾವಿ/i, 'Belagavi'],
+  [/ಕಲಬುರಗಿ|ಗುಲ್ಬರ್ಗ/i, 'Kalaburagi'],
+  [/ಧಾರವಾಡ/i, 'Dharwad'],
+  [/ಬಳ್ಳಾರಿ|ಬಲ್ಲಾರಿ/i, 'Ballari'],
+  [/ವಿಜಯಪುರ|ಬಿಜಾಪುರ/i, 'Vijayapura'],
+  [/ದಾವಣಗೆರೆ/i, 'Davanagere'],
+  [/ಶಿವಮೊಗ್ಗ|ಶಿವಮೊಗ್ಗಾ/i, 'Shivamogga'],
+  [/ತುಮಕೂರು/i, 'Tumakuru'],
+  [/ಉಡುಪಿ/i, 'Udupi'],
+  [/ಹಾಸನ/i, 'Hassan'],
+  [/ರಾಯಚೂರು/i, 'Raichur'],
+  [/ಮಂಡ್ಯ/i, 'Mandya'],
+];
+
+const KN_CRIME = [
+  [/ಸೈಬರ್|ಆನ್‌ಲೈನ್|ಐಟಿ\s*ಅಪರಾಧ/i, 'cyber'],
+  [/ಕಳ್ಳಸಾಗಣೆ|ಕಳ್ಳತನ/i, 'theft'],
+  [/ಕೊಲೆ/i, 'murder'],
+  [/ದೊಂಬತಿ|ಕಳ್ಳಸಾಗಣೆ/i, 'robbery'],
+  [/ಅತ್ಯಾಚಾರ/i, 'rape'],
+  [/ವಂಚನೆ/i, 'fraud'],
+  [/ಅಮ್ಲೀಕೃತ\s*ಪದಾರ್ಥ|ಡ್ರಗ್|ನಾರ್ಕೋ/i, 'drug'],
+  [/ಕಿಡ್ನಾಪ್|ಅಪಹರಣ/i, 'kidnap'],
+  [/ಹಣಕಾಸು|ಹಣ\s*ಹರಿವು|ಹಣ/i, 'financial'],
+  [/ಸಂದೇಹಾಸ್ಪದ/i, 'suspicious'],
+];
+
+/** Normalize Kannada (and mixed) questions into English tokens for intent rules. */
+function normalizeQuestion(question) {
+  const raw = question || '';
+  const replyKn = /[\u0C80-\u0CFF]/.test(raw);
+  let q = raw.toLowerCase();
+  let districtHint = null;
+  let crimeHint = null;
+
+  if (replyKn) {
+  // Count / how-many patterns
+    if (/ಎಷ್ಟು|ಎಷ್ಟೊ|ಎಷ್ಟು\s*ಪ್ರಕರಣ|ಎಷ್ಟು\s*ಎಫ್\s*ಐ\s*ಆರ್/i.test(raw)) {
+      q += ' how many count total';
+    }
+    if (/ಪ್ರಕರಣ|ಎಫ್\s*ಐ\s*ಆರ್|ಎಫ್ಐಆರ್/i.test(raw)) q += ' cases fir';
+    if (/ಜಿಲ್ಲೆ|ಹಾಟ್‌?ಸ್ಪಾಟ್/i.test(raw)) q += ' district hotspot';
+    if (/ಪುನರಾವರ್ತಿತ|ಸಾಮಾನ್ಯ\s*ಅಪರಾಧಿ/i.test(raw)) q += ' repeat habitual offender';
+    if (/ಪ್ರಕಾರ|ವಿಭಾಗ/i.test(raw)) q += ' crime type breakdown category';
+    if (/ಸ್ಥಿತಿ|ವಿಚಾರಣೆ/i.test(raw)) q += ' status investigation disposal';
+    if (/ಇತ್ತೀಚಿನ|ಇತ್ತೀಚೆಗೆ|ಕಳೆದ/i.test(raw)) q += ' recent trend monthly';
+    if (/ಒಟ್ಟು|ಸಾರಾಂಶ/i.test(raw)) q += ' total overview summary';
+
+    for (const [re, district] of KN_DISTRICTS) {
+      if (re.test(raw)) { districtHint = district; q += ` ${district.toLowerCase()}`; break; }
+    }
+    for (const [re, crime] of KN_CRIME) {
+      if (re.test(raw)) { crimeHint = crime; q += ` ${crime}`; break; }
+    }
+  }
+
+  return { q, replyKn, districtHint, crimeHint, raw };
+}
+
+function knCountAnswer(n, crimeTerm, district, sampleCrimeNo) {
+  const crimeKn = crimeTerm === 'cyber' ? 'ಸೈಬರ್ ಅಪರಾಧ' : (crimeTerm || 'ಎಲ್ಲಾ');
+  const distKn = district || 'ಕರ್ನಾಟಕ';
+  const tail = sampleCrimeNo ? ` ಇತ್ತೀಚಿನ ಉದಾಹರಣೆ: FIR ${sampleCrimeNo}.` : '';
+  return `${distKn}ನಲ್ಲಿ ${crimeKn} ಪ್ರಕರಣಗಳು ${n} ದಾಖಲಾಗಿವೆ.${tail}`;
+}
+
+function knFollowups(en) {
+  const map = {
+    'Break these down by police station': 'ಪೊಲೀಸ್ ಠಾಣೆಯವಾರು ವಿಭಜಿಸಿ',
+    'Show their case status': 'ಪ್ರಕರಣದ ಸ್ಥಿತಿ ತೋರಿಸಿ',
+    'List the most recent ones': 'ಇತ್ತೀಚಿನ ಪ್ರಕರಣಗಳನ್ನು ಪಟ್ಟಿ ಮಾಡಿ',
+    'Which districts are crime hotspots?': 'ಯಾವ ಜಿಲ್ಲೆಗಳು ಅಪರಾಧ ಹಾಟ್‌ಸ್ಪಾಟ್‌ಗಳು?',
+    'Show repeat offenders': 'ಪುನರಾವರ್ತಿತ ಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ',
+    'Break down cases by crime type': 'ಅಪರಾಧ ಪ್ರಕಾರವಾರು ವಿಭಜಿಸಿ',
+  };
+  return en.map((f) => map[f] || f);
+}
+
+function handle(question, dbIn) {
+  const db = dbIn || getFirDb();
+  const { q, replyKn, districtHint, crimeHint, raw } = normalizeQuestion(question);
   const run = (sql, ...p) => db.prepare(sql).all(...p);
+  const localize = (enAnswer, knAnswer, followups) => {
+    if (!replyKn) return { answer: enAnswer, followups };
+    return { answer: knAnswer || enAnswer, followups: knFollowups(followups) };
+  };
 
   // 1) FIR lookup by crime number
   const mNo = question.match(/\b(\d{12,20})\b/) || question.match(/(?:fir|crime)\s*(?:no\.?|number|#)?\s*([0-9]{6,})/i);
   if (mNo) {
-    const full = getCaseFull(mNo[1]);
+    const full = getCaseFull(mNo[1], db);
     if (full) {
       const c = full.case;
       const acc = full.accused.map((a) => a.name).join(', ') || 'unknown / unidentified';
@@ -46,10 +135,13 @@ function handle(question) {
       WHERE p.IsHabitualOffender=1
       GROUP BY p.PersonMasterID ORDER BY cases DESC, riskScore DESC LIMIT 15`;
     const rows = run(sql);
-    return fmt(rows, sql,
-      `Found ${rows.length} habitual offenders (linked to 3+ FIRs). Top: ${rows.slice(0, 3).map((r) => `${r.name} (${r.cases} cases, risk ${r.riskScore})`).join('; ')}.`,
-      ['Show the criminal history of the top offender', 'Which districts have the most repeat offenders?', 'List heinous cases by habitual offenders'],
-      { evidence: [`${rows.length} habitual offenders`] });
+    const en = `Found ${rows.length} habitual offenders (linked to 3+ FIRs). Top: ${rows.slice(0, 3).map((r) => `${r.name} (${r.cases} cases, risk ${r.riskScore})`).join('; ')}.`;
+    const kn = rows.length
+      ? `${rows.length} ಪುನರಾವರ್ತಿತ ಅಪರಾಧಿಗಳು ಕಂಡುಬಂದಿವೆ. ಮುಖ್ಯರು: ${rows.slice(0, 3).map((r) => `${r.name} (${r.cases} ಪ್ರಕರಣಗಳು, ಅಪಾಯ ${r.riskScore})`).join('; ')}.`
+      : 'ಯಾವುದೇ ಪುನರಾವರ್ತಿತ ಅಪರಾಧಿಗಳು ದಾಖಲಾಗಿಲ್ಲ.';
+  const fu = ['Show the criminal history of the top offender', 'Which districts have the most repeat offenders?', 'List heinous cases by habitual offenders'];
+    const { answer, followups } = localize(en, kn, fu);
+    return fmt(rows, sql, answer, followups, { evidence: [`${rows.length} habitual offenders`] });
   }
 
   // 3) Suspicious financial transactions / money trail
@@ -73,21 +165,27 @@ function handle(question) {
 
   // 3.5) Filtered count / list by crime type and/or district
   const districtRows = db.prepare('SELECT DistrictName FROM District').all().map((r) => r.DistrictName);
-  const foundDistrict = districtRows.find((d) => {
+  const foundDistrict = districtHint || districtRows.find((d) => {
     const dl = d.toLowerCase();
     const first = dl.split(' ')[0];
     return q.includes(dl) || (first.length > 3 && q.includes(first));
   });
   const SYN = { ndps: 'drug', narcotic: 'drug', abduction: 'kidnap', molest: 'modesty', harassment: 'harassment' };
-  const CRIME_TERMS = ['cyber', 'theft', 'murder', 'robbery', 'burglary', 'burglar', 'dacoity', 'rape', 'dowry', 'cruelty', 'grievous', 'assault', 'hurt', 'drug', 'ndps', 'narcotic', 'fraud', 'cheating', 'forgery', 'accident', 'missing', 'kidnap', 'abduction', 'riot', 'extortion', 'arms', 'harassment', 'women'];
-  let crimeTerm = CRIME_TERMS.find((t) => q.includes(t));
+  const CRIME_TERMS = ['cyber', 'theft', 'murder', 'robbery', 'burglary', 'burglar', 'dacoity', 'rape', 'dowry', 'cruelty', 'grievous', 'assault', 'hurt', 'drug', 'ndps', 'narcotic', 'fraud', 'cheating', 'forgery', 'accident', 'missing', 'kidnap', 'abduction', 'riot', 'extortion', 'arms', 'harassment', 'women', 'financial'];
+  let crimeTerm = crimeHint || CRIME_TERMS.find((t) => q.includes(t));
   if (crimeTerm && SYN[crimeTerm]) crimeTerm = SYN[crimeTerm];
   if (foundDistrict || crimeTerm) {
     const where = [];
     const params = [];
-    if (crimeTerm) { where.push('(lower(sh.CrimeHeadName) LIKE ? OR lower(h.CrimeGroupName) LIKE ?)'); params.push(`%${crimeTerm}%`, `%${crimeTerm}%`); }
+    if (crimeTerm === 'cyber') {
+      where.push('(lower(h.CrimeGroupName) LIKE ? OR lower(sh.CrimeHeadName) LIKE ? OR lower(h.CrimeGroupName) LIKE ?)');
+      params.push('%cyber%', '%cyber%', '%cyber%');
+    } else if (crimeTerm) {
+      where.push('(lower(sh.CrimeHeadName) LIKE ? OR lower(h.CrimeGroupName) LIKE ?)');
+      params.push(`%${crimeTerm}%`, `%${crimeTerm}%`);
+    }
     if (foundDistrict) { where.push('lower(d.DistrictName)=?'); params.push(foundDistrict.toLowerCase()); }
-    const whereSql = 'WHERE ' + where.join(' AND ');
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
     const base = `FROM CaseMaster c
       JOIN CrimeSubHead sh ON sh.CrimeSubHeadID=c.CrimeMinorHeadID
       JOIN CrimeHead h ON h.CrimeHeadID=c.CrimeMajorHeadID
@@ -97,10 +195,13 @@ function handle(question) {
       const sql = `SELECT COUNT(*) cases ${base} ${whereSql}`;
       const n = db.prepare(sql).get(...params).cases;
       const label = `${crimeTerm || ''}${crimeTerm ? ' ' : ''}${foundDistrict ? `in ${foundDistrict} ` : ''}`.trim();
+      const sample = db.prepare(`SELECT c.CrimeNo ${base} ${whereSql} ORDER BY c.CrimeRegisteredDate DESC LIMIT 1`).get(...params);
+      const en = `There ${n === 1 ? 'is' : 'are'} ${n} ${label} case(s) recorded.`;
+      const kn = knCountAnswer(n, crimeTerm, foundDistrict, sample?.CrimeNo);
+      const fu = ['Break these down by police station', 'Show their case status', 'List the most recent ones'];
+      const { answer, followups } = localize(en, kn, fu);
       return fmt([{ crime: crimeTerm || 'all', district: foundDistrict || 'all', cases: n }], sql,
-        `There ${n === 1 ? 'is' : 'are'} ${n} ${label} case(s) recorded.`,
-        ['Break these down by police station', 'Show their case status', 'List the most recent ones'],
-        { evidence: [`${n} cases`] });
+        answer, followups, { evidence: [`${n} cases`] });
     }
     const sql = `SELECT c.CrimeNo, sh.CrimeHeadName crime, d.DistrictName district, c.CrimeRegisteredDate date, st.CaseStatusName status
       ${base} LEFT JOIN CaseStatusMaster st ON st.CaseStatusID=c.CaseStatusID ${whereSql}
@@ -120,9 +221,11 @@ function handle(question) {
       JOIN District d ON d.DistrictID=u.DistrictID
       GROUP BY d.DistrictName ORDER BY cases DESC LIMIT 12`;
     const rows = run(sql);
-    return fmt(rows, sql,
-      `Crime hotspots by district: ${rows.slice(0, 5).map((r) => `${r.district} (${r.cases})`).join(', ')}. ${rows[0].district} has the highest FIR volume.`,
-      ['Break down Bengaluru City crimes by type', 'Show the crime trend over the last 6 months', 'Which crime type is most common?'],
+    const en = `Crime hotspots by district: ${rows.slice(0, 5).map((r) => `${r.district} (${r.cases})`).join(', ')}. ${rows[0].district} has the highest FIR volume.`;
+    const kn = `ಜಿಲ್ಲೆವಾರು ಅಪರಾಧ ಹಾಟ್‌ಸ್ಪಾಟ್‌ಗಳು: ${rows.slice(0, 5).map((r) => `${r.district} (${r.cases})`).join(', ')}. ಅತ್ಯಧಿಕ FIRಗಳು ${rows[0].district}ನಲ್ಲಿ.`;
+    const fu = ['Break down Bengaluru City crimes by type', 'Show the crime trend over the last 6 months', 'Which crime type is most common?'];
+    const { answer, followups } = localize(en, kn, fu);
+    return fmt(rows, sql, answer, followups,
       { chart: { type: 'bar', x: 'district', y: 'cases' }, evidence: [`${rows.length} districts`] });
   }
 
@@ -132,9 +235,11 @@ function handle(question) {
       FROM CaseMaster c JOIN CrimeHead h ON h.CrimeHeadID=c.CrimeMajorHeadID
       GROUP BY h.CrimeGroupName ORDER BY cases DESC`;
     const rows = run(sql);
-    return fmt(rows, sql,
-      `Crime distribution: ${rows.slice(0, 5).map((r) => `${r.crimeHead} (${r.cases})`).join(', ')}.`,
-      ['Show property crimes by district', 'What is the case disposal status?', 'Trend of cybercrime over time'],
+    const en = `Crime distribution: ${rows.slice(0, 5).map((r) => `${r.crimeHead} (${r.cases})`).join(', ')}.`;
+    const kn = `ಅಪರಾಧ ವಿತರಣೆ: ${rows.slice(0, 5).map((r) => `${r.crimeHead} (${r.cases})`).join(', ')}.`;
+    const fu = ['Show property crimes by district', 'What is the case disposal status?', 'Trend of cybercrime over time'];
+    const { answer, followups } = localize(en, kn, fu);
+    return fmt(rows, sql, answer, followups,
       { chart: { type: 'bar', x: 'crimeHead', y: 'cases' }, evidence: [`${rows.length} crime heads`] });
   }
 
@@ -192,8 +297,12 @@ function handle(question) {
 
   return {
     mode: 'offline',
-    answer: `I can answer questions about FIRs, accused, victims, districts/hotspots, crime types, case status, repeat offenders, and financial links. Try: "How many cybercrime cases in Bengaluru?", "Show repeat offenders", or "Look up FIR <number>". (Optionally connect a free local LLM via Ollama for open-ended questions — see RUN.md.)`,
-    sql: null, rows: [], columns: [], evidence: [], followups: ['Which districts are crime hotspots?', 'Show repeat offenders', 'Break down cases by crime type'],
+    answer: replyKn
+      ? 'ನಾನು FIRಗಳು, ಆರೋಪಿಗಳು, ಜಿಲ್ಲೆ/ಹಾಟ್‌ಸ್ಪಾಟ್, ಅಪರಾಧ ಪ್ರಕಾರ, ಪುನರಾವರ್ತಿತ ಅಪರಾಧಿಗಳು ಮತ್ತು ಹಣಕಾಸಿನ ಸಂಬಂಧಗಳ ಬಗ್ಗೆ ಉತ್ತರಿಸಬಹುದು. ಉದಾಹರಣೆ: "ಬೆಂಗಳೂರಿನಲ್ಲಿ ಎಷ್ಟು ಸೈಬರ್ ಅಪರಾಧ ಪ್ರಕರಣಗಳಿವೆ?" ಅಥವಾ "ಪುನರಾವರ್ತಿತ ಅಪರಾಧಿಗಳನ್ನು ತೋರಿಸಿ". (ವಿಶಾಲ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉಚಿತ Ollama LLM ಸಂಪರ್ಕಿಸಿ — RUN.md ನೋಡಿ.)'
+      : `I can answer questions about FIRs, accused, victims, districts/hotspots, crime types, case status, repeat offenders, and financial links. Try: "How many cybercrime cases in Bengaluru?", "Show repeat offenders", or "Look up FIR <number>". (Optionally connect a free local LLM via Ollama for open-ended questions — see RUN.md.)`,
+    sql: null, rows: [], columns: [], evidence: [], followups: replyKn
+      ? knFollowups(['Which districts are crime hotspots?', 'Show repeat offenders', 'Break down cases by crime type'])
+      : ['Which districts are crime hotspots?', 'Show repeat offenders', 'Break down cases by crime type'],
   };
 }
 
