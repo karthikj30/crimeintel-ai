@@ -30,6 +30,7 @@ const chatRoutes = require('./routes/chat');
 const networkRoutes = require('./routes/network');
 const firRoutes = require('./routes/fir');
 const intelRoutes = require('./routes/intel');
+const ragRoutes = require('./routes/rag');
 const { seedFir } = require('./fir/seed');
 
 const PORT = process.env.PORT || 3000;
@@ -60,6 +61,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/network', networkRoutes);
 app.use('/api/fir', firRoutes);
 app.use('/api/intel', intelRoutes);
+app.use('/api/rag', ragRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -102,6 +104,9 @@ server.listen(PORT, () => {
   console.log('  ├── GET  /api/analytics/anomalies');
   console.log('  ├── GET  /api/alerts');
   console.log('  ├── GET  /api/search?q=');
+  console.log('  ├── POST /api/rag/free-chat   (Gemini AI chat)');
+  console.log('  ├── POST /api/rag/upload      (PDF / image upload)');
+  console.log('  ├── POST /api/rag/chat        (RAG document chat)');
   console.log('  └── GET  /api/health');
   console.log('');
 });

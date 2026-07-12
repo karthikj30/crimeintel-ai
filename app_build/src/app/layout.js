@@ -24,6 +24,12 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body style={{ height: '100%', width: '100%', overflow: 'hidden', margin: 0, padding: 0 }}>
+        {/*
+          GT mounts its widget here. Must be in <body>, server-rendered,
+          NOT inside a React component — avoids duplicate-ID hydration issues.
+          The <script> is injected client-side by GoogleTranslate.jsx.
+        */}
+        <div id="google_translate_element" style={{ display: 'none' }} />
         {children}
       </body>
     </html>

@@ -8,34 +8,38 @@ import { Search, Bell, BellRing, PanelRightOpen, PanelRightClose, ShieldCheck } 
 import useUIStore from '@/stores/uiStore';
 import useAlertStore from '@/stores/alertStore';
 import useRealtimeStore from '@/stores/realtimeStore';
+import GoogleTranslate from '@/components/GoogleTranslate';
+import '@/styles/googleTranslate.css';
 
 export default function Header() {
-  const [time, setTime] = useState('');
-  const [searchValue, setSearchValue] = useState('');
-  const alertPanelOpen = useUIStore(s => s.alertPanelOpen);
-  const toggleAlertPanel = useUIStore(s => s.toggleAlertPanel);
-  const setView = useUIStore(s => s.setView);
-  const role = useUIStore(s => s.role);
-  const setRole = useUIStore(s => s.setRole);
-  const unreadCount = useAlertStore(s => s.unreadCount);
-  const connected = useRealtimeStore(s => s.connected);
-  const eventCount = useRealtimeStore(s => s.eventCount);
+  const [time, setTime]          = useState('');
+  const [searchValue, setSearch] = useState('');
 
+  const alertPanelOpen   = useUIStore(s => s.alertPanelOpen);
+  const toggleAlertPanel = useUIStore(s => s.toggleAlertPanel);
+  const setView          = useUIStore(s => s.setView);
+  const role             = useUIStore(s => s.role);
+  const setRole          = useUIStore(s => s.setRole);
+  const unreadCount      = useAlertStore(s => s.unreadCount);
+  const connected        = useRealtimeStore(s => s.connected);
+
+  // Clock
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTime(now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+    const tick = () => setTime(
+      new Date().toLocaleTimeString('en-IN', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+      })
+    );
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
   }, []);
+
+
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchValue.trim()) {
-      setView('investigate');
-    }
+    if (searchValue.trim()) setView('investigate');
   };
 
   return (
@@ -54,7 +58,7 @@ export default function Header() {
               className="search-input"
               placeholder="Search incidents, locations, crime types..."
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               id="global-search"
             />
           </div>
@@ -62,11 +66,17 @@ export default function Header() {
       </div>
 
       <div className="header-actions">
+
+        {/* Language Translator — inline in header */}
+        <GoogleTranslate />
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8 }}>
           <div style={{
             width: 6, height: 6, borderRadius: '50%',
             background: connected ? '#22c55e' : '#ef4444',
-            boxShadow: connected ? '0 0 8px rgba(34,197,94,0.5)' : '0 0 8px rgba(239,68,68,0.5)',
+            boxShadow: connected
+              ? '0 0 8px rgba(34,197,94,0.5)'
+              : '0 0 8px rgba(239,68,68,0.5)',
             animation: 'pulse-glow 2s ease-in-out infinite',
           }} />
           <span className="header-time text-mono">{connected ? 'LIVE' : 'OFFLINE'}</span>
@@ -74,12 +84,18 @@ export default function Header() {
 
         <span className="header-time text-mono">{time}</span>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 4 }} title="Role-based access & audit (governance)">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 4 }}
+             title="Role-based access & audit (governance)">
           <ShieldCheck size={14} style={{ color: '#22c55e' }} />
           <select
             value={role}
-            onChange={(e) => setRole(e.target.value)}
-            style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: 'var(--glass-border)', borderRadius: 'var(--radius-sm)', fontSize: 11, fontWeight: 600, padding: '4px 8px', cursor: 'pointer', outline: 'none' }}
+            onChange={e => setRole(e.target.value)}
+            style={{
+              background: 'var(--bg-elevated)', color: 'var(--text-primary)',
+              border: 'var(--glass-border)', borderRadius: 'var(--radius-sm)',
+              fontSize: 11, fontWeight: 600, padding: '4px 8px',
+              cursor: 'pointer', outline: 'none',
+            }}
           >
             <option>Investigator</option>
             <option>Analyst</option>
@@ -98,6 +114,7 @@ export default function Header() {
         <button className="header-btn" onClick={toggleAlertPanel} id="toggle-alert-panel">
           {alertPanelOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
         </button>
+
       </div>
     </header>
   );

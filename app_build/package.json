@@ -14,13 +14,16 @@
     "serve": "next start --port 3001"
   },
   "dependencies": {
+    "@google/genai": "^0.14.1",
     "better-sqlite3": "^11.1.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "lucide-react": "^0.364.0",
+    "multer": "^1.4.5-lts.1",
     "next": "^16.2.3",
+    "pdf-parse": "^1.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.7",

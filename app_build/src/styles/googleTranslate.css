@@ -1,0 +1,144 @@
+/* ── Hide Google Translate Default UI ── */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner,
+iframe.goog-te-banner-frame {
+  display: none !important;
+}
+
+/* Prevent Google Translate from pushing body down */
+body {
+  top: 0 !important;
+  position: static !important;
+}
+
+/* Hide powered-by logo & icon */
+.goog-logo-link,
+.goog-logo-link:hover,
+.goog-logo-link:visited,
+.goog-te-gadget-icon,
+.goog-te-gadget-simple img,
+.goog-te-gadget > span {
+  display: none !important;
+}
+
+/* Hide tooltip & balloon popups Google Translate injects */
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover,
+.goog-te-spinner-pos {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Keep the native element hidden — we control it programmatically */
+#google_translate_element,
+.goog-te-gadget {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ── Custom GT Selector — embedded in the Header actions bar ── */
+.gt-custom-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gt-custom-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #e2e8f0;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+  height: 28px;
+  line-height: 1;
+}
+
+.gt-custom-btn:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.gt-custom-btn:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.gt-custom-dropdown {
+  position: absolute;
+  /* Opens DOWNWARD from the button */
+  top: calc(100% + 6px);
+  right: 0;
+  background: rgba(10, 14, 26, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 10px;
+  padding: 5px;
+  min-width: 150px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 99999;
+  animation: gt-fade-in 0.12s ease forwards;
+}
+
+@keyframes gt-fade-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.gt-custom-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.gt-custom-option:hover {
+  background: rgba(99, 102, 241, 0.18);
+  color: #e2e8f0;
+}
+
+.gt-custom-option.active {
+  background: rgba(99, 102, 241, 0.28);
+  color: #a5b4fc;
+  font-weight: 700;
+}
+
+.gt-native {
+  font-size: 13px;
+  font-weight: 700;
+  color: #818cf8;
+  min-width: 22px;
+  text-align: center;
+}
+
+.gt-name {
+  color: inherit;
+}
+
+.gt-custom-option.active .gt-native {
+  color: #a5b4fc;
+}

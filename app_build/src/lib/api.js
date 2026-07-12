@@ -3,16 +3,22 @@
 // ============================================================
 
 const BASE = '';
-const TIMEOUT = 5000; // 5 second timeout
+const TIMEOUT = 15000; // 15 s — map/analytics data can be slow
 
 async function fetchJSON(url) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
-  
+  const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT);
+
   try {
     const res = await fetch(`${BASE}${url}`, { signal: controller.signal });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return res.json();
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      // Return null silently — callers should handle null gracefully
+      return null;
+    }
+    throw err;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -118,3 +124,49 @@ export async function getIntelSolve(series) {
   return fetchJSON(`/api/intel/solve${series ? `?series=${encodeURIComponent(series)}` : ''}`);
 }
 export async function getIntelColdCase() { return fetchJSON('/api/intel/cold-case'); }
+
+// --- RAG / Gemini AI ---
+export async function postRagFreeChat(message, history = []) {
+  const res = await fetch(`${BASE}/api/rag/free-chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, history }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    // If fallback response is present, return it instead of throwing
+    if (err.response) return { response: err.response, mode: 'fallback' };
+    throw new Error(err.error || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function uploadRagDocument(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${BASE}/api/rag/upload`, { method: 'POST', body: formData });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function postRagChat(message, sessionId, history = []) {
+  const res = await fetch(`${BASE}/api/rag/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, session_id: sessionId, history }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function deleteRagSession(sessionId) {
+  const res = await fetch(`${BASE}/api/rag/sessions/${sessionId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}

@@ -382,6 +382,46 @@ a {
   gap: 8px;
 }
 
+/* Google Translate slot in header */
+.gt-slot {
+  display: inline-flex;
+  align-items: center;
+}
+.gt-slot:empty { display: none; }
+
+/* Language selector in header — styled select matching reference nav pattern */
+.header-lang-select {
+  border-radius: var(--radius-full);
+  border: var(--glass-border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  padding: 4px 28px 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  /* custom chevron arrow */
+  background-image: linear-gradient(45deg, transparent 50%, var(--accent-primary) 50%),
+                    linear-gradient(135deg, var(--accent-primary) 50%, transparent 50%);
+  background-position: calc(100% - 10px) calc(50% - 2px), calc(100% - 5px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat, no-repeat;
+  background-color: var(--bg-elevated);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+.header-lang-select:hover,
+.header-lang-select:focus {
+  border-color: var(--border-accent);
+  background-color: var(--bg-glass-hover);
+}
+.header-lang-select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
 .header-btn {
   width: 36px;
   height: 36px;
