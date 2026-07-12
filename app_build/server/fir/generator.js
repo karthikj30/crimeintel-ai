@@ -77,9 +77,9 @@ const CASE_STATUS_WEIGHTS = {
 
 const BRIEF_FACTS = {
   'Theft': (o) => `Complainant reports theft of ${o.item} near ${o.place}. Unidentified accused fled the scene. MO: opportunistic ${o.night ? 'night-time' : 'daytime'} theft.`,
-  'House Burglary': (o) => `House-breaking reported at ${o.place}. Accused gained entry ${o.night ? 'at night' : ''} and decamped with gold ornaments and cash. MO: ground-floor entry via rear door.`,
-  'Motor Vehicle Theft': (o) => `Two-wheeler bearing registration KA-${o.reg} stolen from ${o.place}. MO: master-key theft from parking area.`,
-  'Robbery': (o) => `Complainant waylaid near ${o.place} by ${o.n} persons who robbed cash and mobile at knife-point. MO: motorcycle-borne chain/mobile robbery.`,
+  'House Burglary': (o) => `House-breaking reported at ${o.place}. Accused gained entry ${o.night ? 'at night' : ''} and decamped with gold ornaments and cash. Neighbour eyewitness; lane CCTV may have footage. MO: ground-floor entry via rear door.`,
+  'Motor Vehicle Theft': (o) => `Two-wheeler bearing registration KA-${o.reg} stolen from ${o.place}. Parking CCTV covers approach. MO: master-key theft from parking area.`,
+  'Robbery': (o) => `Complainant waylaid near ${o.place} by ${o.n} persons who robbed cash and mobile at knife-point. Eyewitness noted bike number. MO: motorcycle-borne chain/mobile robbery.`,
   'Dacoity': (o) => `Armed gang of ${o.n} committed dacoity at ${o.place}, threatening inmates and looting valuables. MO: masked, armed, late-night.`,
   'Extortion': (o) => `Complainant received threatening calls demanding money at ${o.place}. Amount demanded: Rs.${o.amt}. MO: telephonic extortion.`,
   'Hurt / Assault': (o) => `Quarrel at ${o.place} escalated; accused assaulted complainant causing simple injuries. MO: sudden fight over prior dispute.`,
@@ -319,6 +319,7 @@ function generateAndSeed(db, options = {}) {
   const serialSeqByStatus = CASE_STATUS_WEIGHTS;
 
   // ---------- FIR generation ----------
+  const repeatVictimPool = []; // small pool reused for MARAC-style repeat victimization
   for (let i = 0; i < firCount; i++) {
     const subhead = weightedPick(subheads, s => s.weight);
     const district = weightedPick(districts, d => DISTRICT_WEIGHTS[d.DistrictID] || 4);
@@ -396,7 +397,16 @@ function generateAndSeed(db, options = {}) {
     let victimPerson = null;
     if (needsVictim) {
       const female = FEMALE_VICTIM_CRIMES.has(subhead.name);
-      victimPerson = female ? weightedPick(persons, p => (p._genderId === 2 ? 3 : 0.2)) : pick(persons);
+      // Bias ~35% of crimes-against-women onto a small pool → MARAC repeat-victim demos
+      if (female && chance(0.35) && repeatVictimPool.length) {
+        victimPerson = pick(repeatVictimPool);
+      } else {
+        victimPerson = female ? weightedPick(persons, (p) => (p._genderId === 2 ? 3 : 0.2)) : pick(persons);
+        if (female && victimPerson._genderId === 2 && repeatVictimPool.length < 12
+            && !repeatVictimPool.includes(victimPerson)) {
+          repeatVictimPool.push(victimPerson);
+        }
+      }
       victims.push({
         VictimMasterID: victimId++,
         CaseMasterID: caseRow.CaseMasterID,
@@ -497,12 +507,23 @@ function generateAndSeed(db, options = {}) {
     cases.push(caseRow);
   }
 
-  // ---------- Post-process: habitual flags + risk score ----------
+  // ---------- Post-process: habitual flags + percentile risk score ----------
+  // Raw score (uncapped) then map to 0–100 by rank percentile so tiers separate.
+  const withCases = persons.filter((p) => p._firCount > 0);
   for (const p of persons) {
     if (p._firCount >= 3) p.IsHabitualOffender = 1;
-    // simple explainable risk: prior cases, heinous involvement, arrests, youth
     const youth = p.AgeYear < 30 ? 8 : 0;
-    p.RiskScore = Math.min(100, Math.round(p._firCount * 12 + p._heinous * 15 + p._arrests * 6 + youth));
+    p._rawRisk = p._firCount * 12 + p._heinous * 15 + (p._arrests || 0) * 6 + youth;
+  }
+  const ranked = [...withCases].sort((a, b) => a._rawRisk - b._rawRisk);
+  ranked.forEach((p, i) => {
+    // Percentile among offenders (not among all persons) → real tier spread
+    p.RiskScore = ranked.length <= 1
+      ? 50
+      : Math.round((i / (ranked.length - 1)) * 100);
+  });
+  for (const p of persons) {
+    if (p.RiskScore == null) p.RiskScore = 0;
   }
 
   // ---------- Bulk insert ----------

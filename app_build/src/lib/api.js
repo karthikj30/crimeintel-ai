@@ -102,3 +102,19 @@ export async function getFirDemographics() { return fetchJSON('/api/fir/demograp
 export async function getFirHourly() { return fetchJSON('/api/fir/hourly'); }
 export async function getFirForecast() { return fetchJSON('/api/fir/forecast'); }
 export async function getFirOffenders() { return fetchJSON('/api/fir/offenders'); }
+
+// --- Investigative Intel (7 engines) ---
+export async function getIntelOverview() { return fetchJSON('/api/intel/overview'); }
+export async function getIntelLinkage() { return fetchJSON('/api/intel/linkage'); }
+export async function getIntelGeographic(series) {
+  return fetchJSON(`/api/intel/geographic${series ? `?series=${encodeURIComponent(series)}` : ''}`);
+}
+export async function getIntelNearRepeat() { return fetchJSON('/api/intel/near-repeat'); }
+export async function getIntelMules() { return fetchJSON('/api/intel/mules'); }
+export async function getIntelSolvability() { return fetchJSON('/api/intel/solvability'); }
+export async function getIntelProlific() { return fetchJSON('/api/intel/prolific'); }
+export async function getIntelSafeguarding() { return fetchJSON('/api/intel/safeguarding'); }
+export async function getIntelSolve(series) {
+  return fetchJSON(`/api/intel/solve${series ? `?series=${encodeURIComponent(series)}` : ''}`);
+}
+export async function getIntelColdCase() { return fetchJSON('/api/intel/cold-case'); }

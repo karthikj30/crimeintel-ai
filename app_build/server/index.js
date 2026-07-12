@@ -29,6 +29,7 @@ const searchRoutes = require('./routes/search');
 const chatRoutes = require('./routes/chat');
 const networkRoutes = require('./routes/network');
 const firRoutes = require('./routes/fir');
+const intelRoutes = require('./routes/intel');
 const { seedFir } = require('./fir/seed');
 
 const PORT = process.env.PORT || 3000;
@@ -58,6 +59,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/network', networkRoutes);
 app.use('/api/fir', firRoutes);
+app.use('/api/intel', intelRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

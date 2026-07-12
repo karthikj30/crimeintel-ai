@@ -126,8 +126,111 @@ function handle(question, dbIn) {
     }
   }
 
-  // 2) Repeat / habitual offenders
-  if (/\b(repeat|habitual|recidivis|multiple\s+fir|most\s+cases|frequent\s+offend)/.test(q)) {
+  // 1.5) Investigative intel engines (before generic habitual/finance so they win)
+  if (/\b(solve\s+(this\s+)?series|who\s+fits|suspect\s+(for|fit)|end[\s-]?to[\s-]?end|hunt\s+zone.*suspect|serial\s+theft\s+series|which\s+offender.*series)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.solveSeries(null);
+    if (data.error) {
+      return fmt([], '/* intel.solveSeries */', data.error, ['Show serial crime linkages'], {});
+    }
+    const top = data.verdict?.topSuspect;
+    const en = data.verdict?.summary
+      || `Series ${data.series?.label}: hunt zone ${data.huntZone?.huntRadiusKm} km.`;
+    return fmt((data.suspects || []).map((s) => ({
+      name: s.name, fit: s.fit, risk: s.risk, tier: s.tier, district: s.district,
+    })), '/* intel.solveSeries */', en,
+      ['Show geographic profile of the top series', 'Open cold-case re-opener', 'Show serial crime linkages'],
+      { evidence: [data.series?.label, top ? `suspect ${top.name}` : 'no named suspect'].filter(Boolean) });
+  }
+  if (/\b(cold[\s-]?case|re[\s-]?open|undetected\s+(fir|case)|fresh\s+lead|stale\s+fir)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.reopenColdCases({ limit: 10 });
+    const en = `Cold-case re-opener: scanned ${data.summary.scanned} undetected FIRs → ${data.summary.freshLeads} fresh leads (${data.summary.withSeries} series matches).`;
+    return fmt((data.leads || []).map((l) => ({
+      CrimeNo: l.CrimeNo, lead: l.leadScore, crime: l.subhead, station: l.station, ageDays: l.ageDays,
+    })), '/* intel.reopenColdCases */', en,
+      ['Solve the top linked series', 'Show solvability worklist'],
+      { evidence: [`${data.summary.freshLeads} leads`] });
+  }
+  if (/\b(serial|linkage|vicap|viclas|linked\s+series|same\s+offender|modus|mo\s+cluster)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.findLinkages({ limit: 5 });
+    const top = data.clusters[0];
+    const en = top
+      ? `Serial-crime linkage found ${data.summary.clusters} cross-station series. Top: ${top.label} (${top.strength}% strength). Ask "who fits this series" for end-to-end suspect fit.`
+      : `Scanned ${data.summary.scanned} open FIRs — no multi-station series above threshold yet.`;
+    const rows = (data.clusters || []).map((c) => ({
+      series: c.label, size: c.size, strength: c.strength, crime: c.crimeSubHead, stations: c.stations.length,
+    }));
+    return fmt(rows, '/* intel.findLinkages */', en,
+      ['Who fits this series?', 'Show geographic profile of the top series', 'List near-repeat early warnings'],
+      { evidence: [`${data.summary.clusters} series`] });
+  }
+  if (/\b(rossmo|geographic\s+profil|anchor\s+point|where\s+(does|is)\s+the\s+offender\s+live|offender\s+base|hunt\s+zone)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.profileSeries(null);
+    const en = data.peak
+      ? data.peak.narrative
+      : 'Need at least 3 linked crime locations for Rossmo geographic profiling.';
+    return fmt(data.crimes || [], '/* intel.profileSeries */', en,
+      ['Who fits this series?', 'Show linked serial crime series'],
+      { evidence: data.peak ? [`hunt ${data.peak.huntRadiusKm} km`] : [] });
+  }
+  if (/\b(near[\s-]?repeat|early\s+warning|next\s+burglary|at[\s-]?risk\s+radius|beat\s+alert)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.nearRepeatAlerts({ limit: 8 });
+    const en = `${data.summary.activeWindows} active near-repeat windows (${data.summary.critical} critical) as of ${data.asOf || 'data max date'}. Top: ${(data.active[0] && data.active[0].message) || 'none'}`;
+    return fmt(data.active.map((a) => ({
+      CrimeNo: a.seedCrimeNo, station: a.station, risk: a.riskLevel, urgency: a.urgency, until: a.windowEnds,
+    })), '/* intel.nearRepeatAlerts */', en,
+      ['Show serial crime linkages', 'Show solvability triage'],
+      { evidence: [`${data.summary.activeWindows} windows`] });
+  }
+  if (/\b(mule|layering|freeze\s+list|structuring|fan[\s-]?out|mule\s+ring)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.detectMules({ limit: 8 });
+    const en = `Mule detector flagged ${data.summary.muleCandidates} accounts; ${data.summary.freezeList} on freeze-list. Top: ${(data.mules[0] && `${data.mules[0].person || data.mules[0].accountNo} (score ${data.mules[0].muleScore})`) || 'n/a'}.`;
+    return fmt(data.mules.map((m) => ({
+      person: m.person, account: m.accountNo, bank: m.bank, muleScore: m.muleScore, freeze: m.freezeRecommend ? 'Y' : 'N',
+    })), '/* intel.detectMules */', en,
+      ['Trace the largest money trail', 'Show prolific offenders'],
+      { evidence: [`${data.summary.freezeList} freeze`] });
+  }
+  if (/\b(solvab|triage|worklist|which\s+cases?\s+to\s+(pursue|priorit)|investigator\s+hours)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.solvabilityTriage({ limit: 10 });
+    const top = data.worklist[0];
+    const en = `Solvability triage: ${data.summary.pursue} pursue / ${data.summary.develop} develop / ${data.summary.screen} screen across ${data.summary.openCases || data.summary.scanned || 'all'} open/undetected FIRs. Top FIR ${top ? top.CrimeNo : '—'} scores ${top ? top.solvability : '—'}.`;
+    return fmt(data.worklist.map((c) => ({
+      CrimeNo: c.CrimeNo, score: c.solvability, band: c.band, crime: c.subhead, station: c.station,
+    })), '/* intel.solvabilityTriage */', en,
+      ['Show cold-case re-opener', 'Show IOM watchlist'],
+      { evidence: [`${data.summary.pursue} pursue`] });
+  }
+  if (/\b(iom|prolific|watch\s*list|re[\s-]?offen)/.test(q) && !/\brepeat\s+victim/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.prolificWatchlist({ limit: 10 });
+    const en = `IOM watchlist: ${data.summary.onWatchlist} offenders (tier1 ${data.summary.tier1} / tier2 ${data.summary.tier2} / tier3 ${data.summary.tier3}), ${data.summary.reoffenseAlerts} re-offense alerts. Prioritization only — not a sentencing score.`;
+    return fmt(data.watchlist.map((w) => ({
+      name: w.name, risk: w.risk, cases: w.cases, tier: w.tier, alert: w.alert?.level || '',
+    })), '/* intel.prolificWatchlist */', en,
+      ['Who fits this series?', 'Show safeguarding alerts'],
+      { evidence: [`${data.summary.reoffenseAlerts} alerts`] });
+  }
+  if (/\b(marac|safeguard|repeat\s+victim|domestic\s+violence|crimes?\s+against\s+women\s+alert)/.test(q)) {
+    const intel = require('../intel');
+    const data = intel.safeguardingAlerts({ limit: 10 });
+    const en = `Safeguarding: ${data.summary.repeatVictims} repeat victims — ${data.summary.maracPriority} MARAC-priority, ${data.summary.elevated} elevated. Protective alerts for investigators only.`;
+    return fmt(data.alerts.map((a) => ({
+      name: a.name, firs: a.firCount, risk: a.safeguardingRisk, womenCases: a.againstWomenCases, district: a.district,
+    })), '/* intel.safeguardingAlerts */', en,
+      ['Show solvability worklist', 'Show prolific offenders'],
+      { evidence: [`${data.summary.maracPriority} MARAC`] });
+  }
+
+  // 2) Repeat / habitual offenders (generic — intel IOM already handled above)
+  if (/\b(habitual|recidivis|multiple\s+fir|most\s+cases|frequent\s+offend|repeat\s+offend)/.test(q)
+      && !/\brepeat\s+victim/.test(q)) {
     const sql = `SELECT p.FullName name, p.RiskScore riskScore, COUNT(a.CaseMasterID) cases,
         d.DistrictName district
       FROM PersonMaster p JOIN Accused a ON a.PersonMasterID=p.PersonMasterID
@@ -145,7 +248,7 @@ function handle(question, dbIn) {
   }
 
   // 3) Suspicious financial transactions / money trail
-  if (/\b(financ|transaction|money|laundering|suspicious\s+txn|bank|mule)/.test(q)) {
+  if (/\b(financ|transaction|money|laundering|suspicious\s+txn|bank)/.test(q)) {
     const sql = `SELECT ft.Amount amount, ft.Channel channel, ft.TxnDate date,
         pf.FullName fromPerson, pt.FullName toPerson, c.CrimeNo CrimeNo
       FROM FinancialTransaction ft

@@ -19,6 +19,7 @@ const AlertsView = dynamic(() => import('@/components/alerts/AlertsView'), { ssr
 const InvestigateView = dynamic(() => import('@/components/investigation/InvestigateView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
 const AssistantView = dynamic(() => import('@/components/assistant/AssistantView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
 const NetworkView = dynamic(() => import('@/components/network/NetworkView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
+const IntelView = dynamic(() => import('@/components/intel/IntelView'), { ssr: false, loading: () => <LoadingPlaceholder /> });
 
 function LoadingPlaceholder() {
   return (
@@ -44,6 +45,8 @@ export default function Dashboard() {
     switch (activeView) {
       case 'assistant':
         return <AssistantView />;
+      case 'intel':
+        return <IntelView />;
       case 'network':
         return <NetworkView />;
       case 'map':
@@ -63,7 +66,7 @@ export default function Dashboard() {
     return <LoadingPlaceholder />;
   }
 
-  const isAssistant = ['assistant', 'network', 'map', 'analytics'].includes(activeView);
+  const isAssistant = ['assistant', 'network', 'map', 'analytics', 'intel'].includes(activeView);
 
   return (
     <div className={`app-layout ${(!alertPanelOpen || isAssistant) ? 'alert-collapsed' : ''} ${isAssistant ? 'no-bottombar' : ''}`}>

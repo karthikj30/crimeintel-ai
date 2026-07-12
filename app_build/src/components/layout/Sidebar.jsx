@@ -3,13 +3,14 @@
 // CRIMESCOPE AI — Sidebar Component
 // ============================================================
 
-import { Map, BarChart3, Bell, Search, Settings, Shield, Sparkles, Share2 } from 'lucide-react';
+import { Map, BarChart3, Bell, Search, Settings, Shield, Sparkles, Share2, Crosshair } from 'lucide-react';
 import useUIStore from '@/stores/uiStore';
 import useAlertStore from '@/stores/alertStore';
 import useRealtimeStore from '@/stores/realtimeStore';
 
 const navItems = [
   { id: 'assistant', icon: Sparkles, label: 'Assistant' },
+  { id: 'intel', icon: Crosshair, label: 'Intel' },
   { id: 'map', icon: Map, label: 'Heatmap' },
   { id: 'network', icon: Share2, label: 'Network' },
   { id: 'analytics', icon: BarChart3, label: 'Analytics' },

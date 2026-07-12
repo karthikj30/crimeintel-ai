@@ -59,6 +59,7 @@ Open **http://localhost:3001**.
 | **Network** | Criminal network graph, gang detection, offender drill-down. |
 | **Map** | Karnataka hotspots — real police stations + FIR heat + district clusters. |
 | **Analytics** | Trends, categories, socio-demographics, predicted hotspots, top offenders. |
+| **Intel** | 7 investigator engines: serial linkage, Rossmo geo-profile, near-repeat warnings, mule freeze-list, solvability triage, IOM watchlist, MARAC safeguarding. |
 
 ---
 

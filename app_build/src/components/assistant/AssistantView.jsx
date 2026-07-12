@@ -18,9 +18,11 @@ const SUGGESTIONS = {
     'How many cybercrime cases were registered in Bengaluru City?',
     'Show me the top repeat offenders and their risk scores',
     'Which districts are the biggest crime hotspots?',
+    'Find linked serial crime series across stations',
+    'Show near-repeat early warnings',
+    'Which open FIRs have the highest solvability?',
     'Are there suspicious financial transactions / money trails?',
-    'Break down cases by crime type',
-    'What is the case disposal status across the state?',
+    'Show MARAC safeguarding alerts for repeat victims',
   ],
   kn: [
     'ಬೆಂಗಳೂರಿನಲ್ಲಿ ಎಷ್ಟು ಸೈಬರ್ ಅಪರಾಧ ಪ್ರಕರಣಗಳಿವೆ?',
