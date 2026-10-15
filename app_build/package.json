@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "KSP Conversational Crime Intelligence Platform",
   "main": "server/index.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node server/index.js",
     "backend": "node server/index.js",
