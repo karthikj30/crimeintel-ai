@@ -7,7 +7,10 @@
 const path = require('path');
 const { initFirSchema } = require('./schema');
 
-const DB_PATH = path.join(__dirname, '..', 'ksp_crime.db');
+// On Vercel only /tmp is writable; seedFir() fills a fresh database there.
+const DB_PATH = process.env.VERCEL
+  ? path.join(require('os').tmpdir(), 'ksp_crime.db')
+  : path.join(__dirname, '..', 'ksp_crime.db');
 
 let db;
 

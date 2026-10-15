@@ -7,7 +7,11 @@ const path = require('path');
 const { generateSeedData } = require('./services/dataGenerator');
 const { v4: uuidv4 } = require('uuid');
 
-const DB_PATH = path.join(__dirname, 'crimescope.db');
+// Vercel's filesystem is read-only except /tmp; the database is seeded at
+// startup, so a fresh copy there is enough.
+const DB_PATH = process.env.VERCEL
+  ? path.join(require('os').tmpdir(), 'crimescope.db')
+  : path.join(__dirname, 'crimescope.db');
 
 let db;
 

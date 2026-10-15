@@ -85,28 +85,34 @@ seedFir(); // KSP FIR database (Karnataka crime records) for the conversational 
 console.log('  ✓ Database ready');
 console.log('');
 
-// Setup WebSocket
-setupSocketHandler(io);
+module.exports = app;
 
-// Start server
-server.listen(PORT, () => {
-  console.log(`  🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`  📡 WebSocket ready on ws://localhost:${PORT}`);
-  console.log(`  🌐 Frontend at http://localhost:3001`);
-  console.log('');
-  console.log('  API Endpoints:');
-  console.log('  ├── GET  /api/incidents');
-  console.log('  ├── GET  /api/incidents/heatmap');
-  console.log('  ├── GET  /api/analytics/overview');
-  console.log('  ├── GET  /api/analytics/temporal');
-  console.log('  ├── GET  /api/analytics/categories');
-  console.log('  ├── GET  /api/analytics/regions');
-  console.log('  ├── GET  /api/analytics/anomalies');
-  console.log('  ├── GET  /api/alerts');
-  console.log('  ├── GET  /api/search?q=');
-  console.log('  ├── POST /api/rag/free-chat   (Gemini AI chat)');
-  console.log('  ├── POST /api/rag/upload      (PDF / image upload)');
-  console.log('  ├── POST /api/rag/chat        (RAG document chat)');
-  console.log('  └── GET  /api/health');
-  console.log('');
-});
+// Imported by the Next.js API routes on Vercel (see src/lib/apiProxy.js):
+// they only need the Express app, not a socket server or a fixed port.
+if (require.main === module) {
+  // Setup WebSocket
+  setupSocketHandler(io);
+
+  // Start server
+  server.listen(PORT, () => {
+    console.log(`  🚀 Backend server running on http://localhost:${PORT}`);
+    console.log(`  📡 WebSocket ready on ws://localhost:${PORT}`);
+    console.log(`  🌐 Frontend at http://localhost:3001`);
+    console.log('');
+    console.log('  API Endpoints:');
+    console.log('  ├── GET  /api/incidents');
+    console.log('  ├── GET  /api/incidents/heatmap');
+    console.log('  ├── GET  /api/analytics/overview');
+    console.log('  ├── GET  /api/analytics/temporal');
+    console.log('  ├── GET  /api/analytics/categories');
+    console.log('  ├── GET  /api/analytics/regions');
+    console.log('  ├── GET  /api/analytics/anomalies');
+    console.log('  ├── GET  /api/alerts');
+    console.log('  ├── GET  /api/search?q=');
+    console.log('  ├── POST /api/rag/free-chat   (Gemini AI chat)');
+    console.log('  ├── POST /api/rag/upload      (PDF / image upload)');
+    console.log('  ├── POST /api/rag/chat        (RAG document chat)');
+    console.log('  └── GET  /api/health');
+    console.log('');
+  });
+}

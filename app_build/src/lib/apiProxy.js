@@ -5,9 +5,32 @@
 
 const EXPRESS_BASE = process.env.EXPRESS_API_URL || 'http://localhost:3000';
 
+// On Vercel there is no separate Express process to forward to. Unless
+// EXPRESS_API_URL points at one, start the same Express app inside this
+// function on a loopback port, once per instance, and forward to that.
+let inProcessBase = null;
+
+function expressBase() {
+  if (process.env.EXPRESS_API_URL || !process.env.VERCEL) return Promise.resolve(EXPRESS_BASE);
+  if (!inProcessBase) {
+    inProcessBase = new Promise((resolve, reject) => {
+      const app = require('../../server/index.js');
+      const srv = app.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${srv.address().port}`));
+      srv.on('error', (err) => { inProcessBase = null; reject(err); });
+    });
+  }
+  return inProcessBase;
+}
+
 async function proxyToExpress(request, pathname) {
   const url = new URL(request.url);
-  const target = `${EXPRESS_BASE}${pathname || url.pathname}${url.search}`;
+  let base;
+  try {
+    base = await expressBase();
+  } catch (err) {
+    return Response.json({ error: `Backend failed to start: ${err.message}` }, { status: 503 });
+  }
+  const target = `${base}${pathname || url.pathname}${url.search}`;
 
   // Forward original content-type so multipart uploads work correctly
   const contentType = request.headers.get('content-type');

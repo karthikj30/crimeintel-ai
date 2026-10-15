@@ -16,7 +16,13 @@ const nextConfig = {
     root: __dirname,
   },
   // sql.js WASM for serverless SQLite; allow importing server/ from API routes
-  serverExternalPackages: ['better-sqlite3', 'sql.js'],
+  // The Express backend runs inside the API routes on Vercel (src/lib/apiProxy.js).
+  // Keep it and its native/CommonJS dependencies out of the bundle, and ship
+  // the JSON reference data it reads from disk.
+  serverExternalPackages: ['better-sqlite3', 'sql.js', 'express', 'socket.io', 'multer', 'pdf-parse', '@google/genai'],
+  outputFileTracingIncludes: {
+    '/api/**': ['./server/**/*.js', './server/data/*.json'],
+  },
   experimental: {
     externalDir: true,
   },

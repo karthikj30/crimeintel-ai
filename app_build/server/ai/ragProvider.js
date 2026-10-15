@@ -20,7 +20,9 @@ const fs   = require('fs');
 const crypto = require('crypto');
 
 // ── Constants ────────────────────────────────────────────────
-const DATA_DIR       = path.join(__dirname, '..', 'data', 'rag');
+const DATA_DIR       = process.env.VERCEL
+  ? path.join(require('os').tmpdir(), 'crimeintel-rag')   // only /tmp is writable on Vercel
+  : path.join(__dirname, '..', 'data', 'rag');
 const SESSIONS_DIR   = path.join(DATA_DIR, 'sessions');
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 
