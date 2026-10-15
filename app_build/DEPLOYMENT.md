@@ -5,27 +5,28 @@ The app runs as **Next.js 16** with integrated API routes for Vercel, plus an op
 
 ---
 
-## Option A — Hugging Face (data) + Vercel (demo)   ← implemented
+## Option A — Vercel (demo)   ← live
 
 ### Architecture
-- **Frontend + API:** Next.js `src/app/api/**` route handlers (no separate Express on Vercel)
-- **Database:** `sql.js` (WASM SQLite) loads `ksp_crime.db` from HuggingFace at cold start
-- **Data repo:** [sleepingbeauty11/Datathon_CodeWars](https://huggingface.co/datasets/sleepingbeauty11/Datathon_CodeWars)
+- **Frontend + API:** Next.js `src/app/api/**` route handlers. On Vercel they start the
+  Express app from `server/index.js` in-process on a loopback port and forward to it
+  (`src/lib/apiProxy.js`), so the same routes run locally and in production.
+- **Database:** both SQLite files are seeded from the synthetic generators at cold start
+  (~0.3 s) into `/tmp`, the only writable path on Vercel.
+- **Real-time:** Socket.io is not available on serverless functions; live alerts need
+  the local two-process mode below.
 
 ### Deploy to Vercel
-```bash
-# From repo root (vercel.json points rootDirectory to app_build)
-vercel --prod
-```
+Project settings: **Root Directory `app_build`**, framework Next.js. `app_build/vercel.json`
+pins the functions to Mumbai (`bom1`). Pushing to `main` deploys.
 
-### Environment variables (Vercel dashboard)
+### Environment variables (Vercel dashboard, all optional)
 | Var | Value |
 |-----|-------|
-| `HF_DATASET_REPO` | `sleepingbeauty11/Datathon_CodeWars` |
-| `HF_DATASET_FILE` | `ksp_crime.db` |
-| `LLM_BASE_URL` | (optional) Groq / HF router for open-ended AI |
-| `LLM_API_KEY` | (optional) |
-| `LLM_MODEL` | (optional) e.g. `llama-3.3-70b-versatile` |
+| `LLM_BASE_URL` | Groq / HF router for open-ended AI (the offline engine answers without it) |
+| `LLM_API_KEY` | |
+| `LLM_MODEL` | e.g. `llama-3.3-70b-versatile` |
+| `EXPRESS_API_URL` | Forward to a separately hosted Express server instead of the in-process one |
 
 ### Upload / refresh the HuggingFace dataset
 ```bash
