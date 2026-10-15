@@ -113,7 +113,7 @@ function buildSurface(crimes, opts = {}) {
   let nearestStation = null;
   try {
     const stations = JSON.parse(
-      require('fs').readFileSync(require('path').join(__dirname, '..', 'data', 'ksp_police_stations.json'), 'utf8'),
+      require('fs').readFileSync(require('../dataFile').dataFile('ksp_police_stations.json'), 'utf8'),
     );
     const list = Array.isArray(stations) ? stations : (stations.stations || []);
     let best = Infinity;

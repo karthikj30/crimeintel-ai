@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Flame, Building2, MapPinned } from 'lucide-react';
-import { MAP_TILE_URL, MAP_ATTRIBUTION, HEATMAP_CONFIG } from '@/lib/constants';
+import { MAP_TILE_URL, MAP_LABELS_URL, MAP_MAX_ZOOM, MAP_ATTRIBUTION, HEATMAP_CONFIG } from '@/lib/constants';
 import { getFirHeatmap, getFirStations, getFirDistricts } from '@/lib/api';
 
 const KA_CENTER = [14.8, 76.3];
@@ -32,7 +32,8 @@ export default function KarnatakaMap() {
       if (cancelled || !mapRef.current || mapInstance.current) return;
 
       const map = L.map(mapRef.current, { center: KA_CENTER, zoom: KA_ZOOM, zoomControl: false, attributionControl: true });
-      L.tileLayer(MAP_TILE_URL, { attribution: MAP_ATTRIBUTION, subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+      L.tileLayer(MAP_TILE_URL, { attribution: MAP_ATTRIBUTION, maxNativeZoom: MAP_MAX_ZOOM, maxZoom: 19 }).addTo(map);
+      L.tileLayer(MAP_LABELS_URL, { maxNativeZoom: MAP_MAX_ZOOM, maxZoom: 19, pane: 'overlayPane' }).addTo(map);
       L.control.zoom({ position: 'topright' }).addTo(map);
       mapInstance.current = map;
       setReady(true);

@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { dataFile } = require('../dataFile');
 const { getFirDb } = require('./db');
 
 function resolveDb(dbIn) {
@@ -15,7 +16,7 @@ function resolveDb(dbIn) {
 let STATIONS = null;
 function loadStationsJson() {
   try {
-    const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'ksp_police_stations.json'), 'utf8'));
+    const raw = JSON.parse(fs.readFileSync(dataFile('ksp_police_stations.json'), 'utf8'));
     return Array.isArray(raw) ? raw : (raw.stations || []);
   } catch {
     return [];

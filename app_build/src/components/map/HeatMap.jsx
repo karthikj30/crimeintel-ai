@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import useIncidentStore from '@/stores/incidentStore';
-import { MAP_CENTER, MAP_ZOOM, MAP_TILE_URL, MAP_ATTRIBUTION, HEATMAP_CONFIG } from '@/lib/constants';
+import { MAP_CENTER, MAP_ZOOM, MAP_TILE_URL, MAP_LABELS_URL, MAP_MAX_ZOOM, MAP_ATTRIBUTION, HEATMAP_CONFIG } from '@/lib/constants';
 import { getSeverityColor, capitalize, formatTime } from '@/lib/utils';
 
 export default function HeatMap() {
@@ -45,9 +45,10 @@ export default function HeatMap() {
 
       L.tileLayer(MAP_TILE_URL, {
         attribution: MAP_ATTRIBUTION,
-        subdomains: 'abcd',
+        maxNativeZoom: MAP_MAX_ZOOM,
         maxZoom: 19,
       }).addTo(map);
+      L.tileLayer(MAP_LABELS_URL, { maxNativeZoom: MAP_MAX_ZOOM, maxZoom: 19, pane: 'overlayPane' }).addTo(map);
 
       L.control.zoom({ position: 'topright' }).addTo(map);
 

@@ -66,5 +66,9 @@ export const HEATMAP_CONFIG = {
 // New Delhi center coordinates for demo
 export const MAP_CENTER = [28.6139, 77.2090];
 export const MAP_ZOOM = 12;
-export const MAP_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-export const MAP_ATTRIBUTION = '&copy; <a href="https://carto.com/">CARTO</a>';
+// Esri's dark canvas needs no API key. CARTO's basemaps now return an
+// "API KEY REQUIRED" placeholder tile without one.
+export const MAP_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+export const MAP_LABELS_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
+export const MAP_MAX_ZOOM = 16;
+export const MAP_ATTRIBUTION = 'Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors';
